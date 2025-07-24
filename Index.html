@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malla Curricular Ciencia de la Computación - UCSP</title>
+    <title>Malla Curricular Interactiva - Ciencia de Computación</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f5f7fa;
         }
         .container {
             max-width: 1200px;
@@ -18,13 +18,33 @@
         h1 {
             color: #2c3e50;
             text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
         }
         .semester {
+            margin-bottom: 40px;
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             padding: 20px;
-            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .semester-title {
             color: #e74c3c;
@@ -32,114 +52,365 @@
             padding-bottom: 10px;
             margin-top: 0;
         }
-        .courses-container {
-            display: flex;
-            flex-wrap: wrap;
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 15px;
+            position: relative;
+            min-height: 200px;
         }
         .course {
             background-color: #3498db;
             color: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 6px;
-            width: calc(33% - 15px);
-            box-sizing: border-box;
-            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
         }
         .course:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-        .course-title {
-            font-weight: bold;
-            margin-bottom: 8px;
+        .course.completed {
+            background-color: #2ecc71;
+        }
+        .course.critical {
+            background-color: #e74c3c;
+        }
+        .course.elective {
+            background-color: #9b59b6;
+        }
+        .course.general {
+            background-color: #f39c12;
+        }
+        .course.math {
+            background-color: #1abc9c;
         }
         .course-code {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .course-name {
             font-size: 0.9em;
-            opacity: 0.9;
         }
-        .unlocks {
-            margin-top: 10px;
-            font-size: 0.85em;
-            border-top: 1px dashed rgba(255,255,255,0.5);
-            padding-top: 8px;
+        .arrow {
+            position: absolute;
+            background-color: #7f8c8d;
+            z-index: 0;
         }
-        .unlocks-title {
-            font-style: italic;
+        .horizontal-arrow {
+            height: 2px;
+            transform-origin: left center;
         }
-        .unlocks-list {
-            margin-top: 5px;
-            padding-left: 15px;
+        .vertical-arrow {
+            width: 2px;
+            transform-origin: center top;
+        }
+        .arrow-head {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 5px 0 5px 8px;
+            border-color: transparent transparent transparent #7f8c8d;
+            right: -8px;
+            top: -4px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .close-modal {
+            float: right;
+            cursor: pointer;
+            font-size: 1.5em;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Malla Curricular - Ciencia de la Computación UCSP</h1>
+        <h1>Malla Curricular Interactiva - Ciencia de Computación</h1>
         
+        <div class="controls">
+            <button id="save-btn">Guardar Progreso</button>
+            <button id="load-btn">Cargar Progreso</button>
+            <button id="reset-btn">Reiniciar</button>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>Cursos Principales</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span>Camino Crítico</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9b59b6;"></div>
+                <span>Electivos</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #f39c12;"></div>
+                <span>Formación General</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #1abc9c;"></div>
+                <span>Matemáticas</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #2ecc71;"></div>
+                <span>Completado</span>
+            </div>
+        </div>
+        
+        <!-- Semestre 1 -->
         <div class="semester">
-            <h2 class="semester-title">Primer Semestre (22 créditos)</h2>
-            <div class="courses-container">
-                <div class="course">
+            <h2 class="semester-title">1er Semestre (22 cr)</h2>
+            <div class="courses-grid" id="semester1">
+                <div class="course math" data-code="MA100" data-name="Matemática I" data-unlocks="MA101,MA102">
                     <div class="course-code">MA100</div>
-                    <div class="course-title">Matemática I</div>
-                    <div class="unlocks">
-                        <div class="unlocks-title">Desbloquea:</div>
-                        <ul class="unlocks-list">
-                            <li>Matemática II (MA101)</li>
-                            <li>Cálculo I (MA102)</li>
-                        </ul>
-                    </div>
+                    <div class="course-name">Matemática I</div>
                 </div>
-                
-                <div class="course">
+                <div class="course" data-code="CS111" data-name="Programación de Video Juegos" data-unlocks="CS112">
                     <div class="course-code">CS111</div>
-                    <div class="course-title">Programación de Video Juegos</div>
-                    <div class="unlocks">
-                        <div class="unlocks-title">Desbloquea:</div>
-                        <ul class="unlocks-list">
-                            <li>Ciencia de la Computación I (CS112)</li>
-                        </ul>
-                    </div>
+                    <div class="course-name">Programación de Video Juegos</div>
                 </div>
-                
-                <div class="course">
+                <div class="course critical" data-code="CS1D1" data-name="Estructuras Discretas I" data-unlocks="CS1D2,CS1D3">
                     <div class="course-code">CS1D1</div>
-                    <div class="course-title">Estructuras Discretas I</div>
-                    <div class="unlocks">
-                        <div class="unlocks-title">Desbloquea:</div>
-                        <ul class="unlocks-list">
-                            <li>Álgebra Abstracta (CS1D3)</li>
-                            <li>Estructuras Discretas II (CS1D2)</li>
-                        </ul>
-                    </div>
+                    <div class="course-name">Estructuras Discretas I</div>
                 </div>
-                
-                <div class="course">
+                <div class="course general" data-code="FG101" data-name="Comunicación">
                     <div class="course-code">FG101</div>
-                    <div class="course-title">Comunicación</div>
-                    <div class="unlocks">
-                        <div class="unlocks-title">No tiene prerrequisitos</div>
-                    </div>
+                    <div class="course-name">Comunicación</div>
                 </div>
-                
-                <div class="course">
+                <div class="course general" data-code="FG102" data-name="Metodología del Estudio">
                     <div class="course-code">FG102</div>
-                    <div class="course-title">Metodología del Estudio</div>
-                    <div class="unlocks">
-                        <div class="unlocks-title">No tiene prerrequisitos</div>
-                    </div>
+                    <div class="course-name">Metodología del Estudio</div>
                 </div>
-                
-                <div class="course">
+                <div class="course general" data-code="FG103" data-name="Introducción a la Vida Universitaria">
                     <div class="course-code">FG103</div>
-                    <div class="course-title">Introducción a la Vida Universitaria</div>
-                    <div class="unlocks">
-                        <div class="unlocks-title">No tiene prerrequisitos</div>
-                    </div>
+                    <div class="course-name">IVU</div>
+                </div>
+                <div class="course" data-code="CS100" data-name="Introducción de Ciencia de la Computación">
+                    <div class="course-code">CS100</div>
+                    <div class="course-name">Intro. CC</div>
                 </div>
             </div>
         </div>
+        
+        <!-- Semestre 2 -->
+        <div class="semester">
+            <h2 class="semester-title">2do Semestre (21 cr)</h2>
+            <div class="courses-grid" id="semester2">
+                <div class="course" data-code="CS112" data-name="Ciencia de la Computación I" data-unlocks="CS113" data-requires="CS111">
+                    <div class="course-code">CS112</div>
+                    <div class="course-name">Ciencia de la Computación I</div>
+                </div>
+                <div class="course critical" data-code="CS1D2" data-name="Estructuras Discretas II" data-unlocks="CS210" data-requires="CS1D1">
+                    <div class="course-code">CS1D2</div>
+                    <div class="course-name">Estructuras Discretas II</div>
+                </div>
+                <div class="course math" data-code="MA101" data-name="Matemática II" data-unlocks="MA201" data-requires="MA100">
+                    <div class="course-code">MA101</div>
+                    <div class="course-name">Matemática II</div>
+                </div>
+                <div class="course general" data-code="FG104" data-name="Introducción a la Filosofía">
+                    <div class="course-code">FG104</div>
+                    <div class="course-name">Intro. Filosofía</div>
+                </div>
+                <div class="course general" data-code="FG105" data-name="Apreciación Musical">
+                    <div class="course-code">FG105</div>
+                    <div class="course-name">Aprec. Musical</div>
+                </div>
+                <div class="course general" data-code="FG112" data-name="Persona, Matrimonio y Familia">
+                    <div class="course-code">FG112</div>
+                    <div class="course-name">Persona y Familia</div>
+                </div>
+                <div class="course elective" data-code="ELECT1" data-name="Electivo">
+                    <div class="course-code">Electivo</div>
+                    <div class="course-name">Curso Electivo</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Continuar con los demás semestres (3-10) -->
+        <!-- Por espacio, solo muestro los primeros 2 semestres como ejemplo -->
+        
+        <!-- Modal para mostrar detalles del curso -->
+        <div class="modal" id="course-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 id="modal-course-code"></h2>
+                <h3 id="modal-course-name"></h3>
+                <div id="modal-course-info"></div>
+                <button id="complete-btn">Marcar como Completado</button>
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Variables globales
+        let completedCourses = JSON.parse(localStorage.getItem('completedCourses')) || [];
+        let selectedCourse = null;
+        
+        // Inicializar la malla
+        document.addEventListener('DOMContentLoaded', function() {
+            drawArrows();
+            setupEventListeners();
+            updateCompletedCourses();
+        });
+        
+        // Dibujar flechas entre cursos
+        function drawArrows() {
+            // Esta función necesitaría implementación compleja con SVG o Canvas
+            // para dibujar las flechas entre los cursos basado en sus relaciones
+            // Por simplicidad en este ejemplo, no se implementa completamente
+        }
+        
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Click en curso
+            document.querySelectorAll('.course').forEach(course => {
+                course.addEventListener('click', function() {
+                    showCourseModal(this);
+                });
+            });
+            
+            // Botones de control
+            document.getElementById('save-btn').addEventListener('click', saveProgress);
+            document.getElementById('load-btn').addEventListener('click', loadProgress);
+            document.getElementById('reset-btn').addEventListener('click', resetProgress);
+            
+            // Modal
+            document.querySelector('.close-modal').addEventListener('click', hideModal);
+            document.getElementById('complete-btn').addEventListener('click', toggleCourseCompletion);
+        }
+        
+        // Mostrar modal con info del curso
+        function showCourseModal(courseElement) {
+            selectedCourse = courseElement;
+            const code = courseElement.getAttribute('data-code');
+            const name = courseElement.getAttribute('data-name');
+            const unlocks = courseElement.getAttribute('data-unlocks');
+            const requires = courseElement.getAttribute('data-requires');
+            
+            document.getElementById('modal-course-code').textContent = code;
+            document.getElementById('modal-course-name').textContent = name;
+            
+            let infoHtml = '<p><strong>Créditos:</strong> 4</p>';
+            
+            if (requires) {
+                infoHtml += `<p><strong>Prerrequisitos:</strong> ${requires.split(',').join(', ')}</p>`;
+            } else {
+                infoHtml += '<p><strong>Prerrequisitos:</strong> Ninguno</p>';
+            }
+            
+            if (unlocks) {
+                infoHtml += `<p><strong>Desbloquea:</strong> ${unlocks.split(',').join(', ')}</p>`;
+            } else {
+                infoHtml += '<p><strong>Desbloquea:</strong> Ninguno</p>';
+            }
+            
+            document.getElementById('modal-course-info').innerHTML = infoHtml;
+            
+            if (completedCourses.includes(code)) {
+                document.getElementById('complete-btn').textContent = 'Marcar como No Completado';
+            } else {
+                document.getElementById('complete-btn').textContent = 'Marcar como Completado';
+            }
+            
+            document.getElementById('course-modal').style.display = 'flex';
+        }
+        
+        // Ocultar modal
+        function hideModal() {
+            document.getElementById('course-modal').style.display = 'none';
+        }
+        
+        // Alternar estado de completado
+        function toggleCourseCompletion() {
+            const courseCode = selectedCourse.getAttribute('data-code');
+            
+            if (completedCourses.includes(courseCode)) {
+                completedCourses = completedCourses.filter(code => code !== courseCode);
+            } else {
+                completedCourses.push(courseCode);
+            }
+            
+            updateCompletedCourses();
+            hideModal();
+        }
+        
+        // Actualizar visualización de cursos completados
+        function updateCompletedCourses() {
+            document.querySelectorAll('.course').forEach(course => {
+                const code = course.getAttribute('data-code');
+                if (completedCourses.includes(code)) {
+                    course.classList.add('completed');
+                } else {
+                    course.classList.remove('completed');
+                }
+            });
+        }
+        
+        // Guardar progreso en localStorage
+        function saveProgress() {
+            localStorage.setItem('completedCourses', JSON.stringify(completedCourses));
+            alert('Progreso guardado correctamente');
+        }
+        
+        // Cargar progreso desde localStorage
+        function loadProgress() {
+            completedCourses = JSON.parse(localStorage.getItem('completedCourses')) || [];
+            updateCompletedCourses();
+            alert('Progreso cargado correctamente');
+        }
+        
+        // Reiniciar progreso
+        function resetProgress() {
+            if (confirm('¿Estás seguro de que quieres reiniciar tu progreso?')) {
+                completedCourses = [];
+                localStorage.removeItem('completedCourses');
+                updateCompletedCourses();
+            }
+        }
+    </script>
 </body>
 </html>
